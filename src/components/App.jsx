@@ -10,7 +10,7 @@ import { AppContainer } from "./App.styled";
 
 export const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  // const [id, setId] = useState(null);
+  const [id, setId] = useState(null);
   const [largeImageURL, setLargeImageURL] = useState('');
   const [page, setPage] = useState(1);
   const [per_page, setPer_page] = useState(12);
