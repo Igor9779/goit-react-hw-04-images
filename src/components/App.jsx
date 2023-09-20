@@ -10,14 +10,14 @@ import { AppContainer } from "./App.styled";
 
 export const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [id, setId] = useState(null);
+  // const [id, setId] = useState(null);
   const [largeImageURL, setLargeImageURL] = useState('');
   const [page, setPage] = useState(1);
-  const [per_page, setPer_page] = useState(12);
+  const [per_page] = useState(12);
   const [images, setImages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadMore, setLoadMore] = useState(false);
-  const [error, setError] = useState(null);
+  // const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
 
@@ -31,7 +31,7 @@ export const App = () => {
         setImages(prevImg => [...prevImg, ...hits]);
         setLoadMore(page < Math.ceil(totalHits / per_page));
       } catch (error) {
-        setError(error.message);
+        console.log(error.message);
       } finally {
         setIsLoading(false);
       }
