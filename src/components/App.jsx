@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { useEffect, useState } from "react";
 import { fetchPhotos } from "./services/api";
 import { animateScroll } from "react-scroll";
 import {SearchBar} from "./Searchbar/Searchbar";
@@ -8,58 +8,50 @@ import {Button} from "./Button/Button";
 import { Modal } from "./Modal/Modal";
 import { AppContainer } from "./App.styled";
 
-export class App extends Component {
-  state = {
-    searchQuery: '',
-    id: null,
-    largeImageURL: 'largeImageURL',
-    page: 1,
-    per_page: 12,
-    images: [],
-    isLoading: false,
-    loadMore: false,
-    error: null,
-    showModal:false,
-  } 
+export const App = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  // const [id, setId] = useState(null);
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const [page, setPage] = useState(1);
+  const [per_page, setPer_page] = useState(12);
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadMore, setLoadMore] = useState(false);
+  const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.searchQuery !== this.state.searchQuery || prevState.page !== this.state.page) {
-      this.getPhotos(this.state.searchQuery, this.state.page);
-    }
-  }
 
-  getPhotos = async (query, page) => {
-    this.setState({ isLoading: true });
-    if (!query) return;
-    try {
-      const { hits, totalHits } = await fetchPhotos(query, page);
-      console.log(hits, totalHits);
-      this.setState(prev => ({
-        images: [...prev.images, ...hits],
-        loadMore: this.state.page < Math.ceil(totalHits / this.state.per_page)
-      }))
-    } catch (error) {
-      this.setState({ error: error.message });
-    } finally {
-      this.setState({ isLoading: false });
-    }
+  useEffect(() => {
+    if (searchQuery === '' || page === 0) return;
+
+    const getPhotos = async () => {
+      setIsLoading(true);
+      try {
+        const { hits, totalHits } = await fetchPhotos(searchQuery, page);
+        setImages(prevImg => [...prevImg, ...hits]);
+        setLoadMore(page < Math.ceil(totalHits / per_page));
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    getPhotos();
+  }, [searchQuery, page, per_page]);
+
+  const formSubmit = searchQuery => {
+    setSearchQuery(searchQuery);
+    setImages([]);
+    setPage(1);
+    setLoadMore(false);
   };
 
-  formSubmit = searchQuery => {
-    this.setState({
-      searchQuery,
-      images: [],
-      page: 1,
-      loadMore: false,
-    });
+  const onLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
+    scrollOnMoreBtn();
   };
 
-  onLoadMore = () => {
-    this.setState(prev => ({ page: prev.page + 1 }));
-    this.scrollOnMoreBtn();
-  };
-
-  scrollOnMoreBtn = () => {
+  const scrollOnMoreBtn = () => {
     animateScroll.scrollToBottom({
       duration: 1000,
       delay: 10,
@@ -67,32 +59,26 @@ export class App extends Component {
     });
   };
 
-  openModal = largeImageURL => {
-    this.setState({
-      showModal: true,
-      largeImageURL: largeImageURL,
-    })
+  const openModal = largeImageURL => {
+    setShowModal(true);
+    setLargeImageURL(largeImageURL);
   };
 
-  closeModal = () => {
-    this.setState({ showModal: false })
-  };
+  const closeModal = () => setShowModal(false);
 
-  render() {
-    const { images, isLoading, loadMore, page, showModal, largeImageURL } = this.state;
-    return (
-      <AppContainer>
-        <SearchBar onSubmit={this.formSubmit} />
-        {isLoading ? (
-          <Loader />
-        ) : (
-            <ImageGallery images={images} openModal={this.openModal}/>
-        )}
-        {loadMore && <Button onLoadMore={this.onLoadMore} page={page} />}
-        {showModal && (
-          <Modal largeImageURL={largeImageURL} onClose={this.closeModal} />
-        )} 
-      </AppContainer>
-    );
-  }
-}
+  return (
+    <AppContainer>
+      <SearchBar onSubmit={formSubmit} />
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <ImageGallery images={images} openModal={openModal} />
+      )}
+      {loadMore && <Button onLoadMore={onLoadMore} page={page} />}
+      {showModal && (
+        <Modal largeImageURL={largeImageURL} onClose={closeModal} />
+      )}
+    </AppContainer>
+  );
+};
+
